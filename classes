@@ -1,0 +1,43 @@
+class Personel:
+    def __init__(self,ad,soyad,departman,maas,calisma_yili):
+        self.ad=ad
+        self.soyad=soyad
+        self.departman=departman
+        self.maas=maas
+        self.calisma_yili=calisma_yili
+        
+class Firma:
+    personel_listesi=[]
+    
+    def personel_ekle(self,personel):
+        self.personel_listesi.append(personel)
+    
+    def personel_listele(self):
+        for personel in self.personel_listesi:
+            print(f"ad: {personel.ad}")
+            print(f"soyad: {personel.soyad}")
+            print(f"departman: {personel.departman}")
+            print(f"maas: {personel.maas}")
+            print(f"çalışa zamanı: {personel.calisma_yili} yıl")
+            
+    def maas_zammi(self,personel,zam_orani):
+        personel.maas+= (personel.maas*zam_orani/100)
+
+    def personel_cikart(self,personel):
+        self.personel_listesi.remove(personel)
+        
+personel1=Personel("Ayşe","Çelik","yazılım",20000,4)
+personel2=Personel("Fatih","Demir","üretim",25000,6)
+
+firma=Firma()
+firma.personel_ekle(personel1)
+firma.personel_ekle(personel2)
+firma.personel_listele()
+print ("\n\n    ZAMLANMIŞ HALİ")
+firma.maas_zammi(personel1,10)
+firma.maas_zammi(personel2,10)
+firma.personel_listele()
+print ("\n\n    PERSONEL ÇIKARTILMIŞ HALİ")
+firma.personel_cikart(personel1)
+firma.personel_listele()
+    

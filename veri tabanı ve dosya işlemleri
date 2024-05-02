@@ -1,0 +1,76 @@
+import sqlite3
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# SQLite veritabanı bağlantısı
+baglan = sqlite3.connect('metinler.db')
+imlec = baglan.cursor()
+
+# Tabloyu oluştur
+imlec.execute('''CREATE TABLE IF NOT EXISTS Metinler
+             (id INTEGER PRIMARY KEY,
+             metin TEXT)''')
+
+# Kullanıcıdan metinleri al
+metin1 = input("İlk metni girin: ")
+metin2 = input("İkinci metni girin: ")
+
+# Metinleri veritabanına ekle
+imlec.execute("INSERT INTO Metinler (metin) VALUES (?)", (metin1,))
+imlec.execute("INSERT INTO Metinler (metin) VALUES (?)", (metin2,))
+
+# Veritabanındaki metinleri al
+imlec.execute("SELECT metin FROM Metinler")
+alinan_veri = imlec.fetchall()
+
+if len(alinan_veri) >= 2:
+    metin1 = alinan_veri[-2][0]  # İlk metni al
+    metin2 = alinan_veri[-1][0]  # İkinci metni al
+    
+metin1=list(metin1)
+metin2=list(metin2)
+
+count=0
+j=1
+benzer=[]
+print(type(benzer))
+if len(metin1)>=len(metin2):
+    for i in range(len(metin2)):
+        if metin2[i] == metin1[i]:
+            harf=metin2[i]
+            count=int(count)+1
+            benzer.insert(j, harf)
+            j=j+1
+    benzerlik=100*count/len(metin1)
+else:
+    for i in range(len(metin1)):
+        if metin1[i] == metin2[i]:
+            harf=metin1[i]
+            count=count+1
+            benzer.insert(j, harf)
+            j=j+1
+    benzerlik=100*count/len(metin2)  
+  
+dosya=open ('benzer.txt','w')
+dosya.write(str(benzer))
+dosya.close()
+
+dosya=open ('benzer.txt','r')
+benzer1=[]
+k=0
+for i in dosya:
+    benzer1.insert(k,i)
+    k=k+1
+dosya.close()
+
+
+print("Metinler arasındaki benzerlik: %{}ve benzer durumlar: {}".format(benzerlik,str(benzer1)))
+
+# Bağlantıyı kapat
+baglan.commit()
+baglan.close()
+

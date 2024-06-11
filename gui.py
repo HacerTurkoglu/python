@@ -12,6 +12,9 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS Kullanici (
                     sifre TEXT)''')
 conn.commit()
 
+current_user = None
+comparison_results = []
+
 def kullanici_giris():
     global current_user
     kullanici_adi = kullanici_adi_entry.get()
@@ -50,12 +53,16 @@ def sifre_guncelle():
         cursor.execute("UPDATE Kullanici SET sifre=? WHERE kullanici_adi=?", (yeni_sifre, kullanici_adi))
         conn.commit()
         messagebox.showinfo("Başarılı", "Şifre güncellendi!")
+        ana_menu()
     else:
         messagebox.showerror("Hata", "Mevcut şifre yanlış!")
 
 def metin_karsilastir(algoritma):
     dosya1 = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
     dosya2 = filedialog.askopenfilename(filetypes=[("Text files", "*.txt")])
+    
+    if not dosya1 or not dosya2:
+        return
     
     with open(dosya1, 'r', encoding='utf-8') as file:
         metin1 = file.read()
@@ -64,12 +71,17 @@ def metin_karsilastir(algoritma):
     
     if algoritma == "cosine":
         sonuc = cosine_benzerlik(metin1, metin2)
-    if  algoritma == "jaccard":
+        algoritma_adi = "Cosine Similarity"
+    elif algoritma == "jaccard":
         sonuc = jaccard_benzerlik(metin1, metin2)
+        algoritma_adi = "Jaccard Benzerlik Katsayısı"
     elif algoritma == "levenshtein":
         sonuc = levenshtein_benzerlik(metin1, metin2)
+        algoritma_adi = "Levenshtein Mesafesi"
     
-    messagebox.showinfo("Karşılaştırma Sonucu", f"Benzerlik: %{sonuc:.2f}")
+    sonuc_metni = f"{algoritma_adi} ile {dosya1} ve {dosya2} karşılaştırma sonucu: %{sonuc:.2f}\n"
+    comparison_results.append(sonuc_metni)
+    guncelle_sonuclar()
 
 def cosine_benzerlik(metin1, metin2):
     tfidf_vectorizer = TfidfVectorizer().fit_transform([metin1, metin2])
@@ -116,9 +128,9 @@ def ana_menu():
     
     karsilastir_menu = tk.Menu(menu)
     menu.add_cascade(label="Karşılaştır", menu=karsilastir_menu)
-    karsilastir_menu.add_command(label="Metni Cosinüs algoritması ile karşılaştır", command=lambda: metin_karsilastir("cosine"))
-    karsilastir_menu.add_command(label="Metni Jaccard algoritması ile karşılaştır", command=lambda: metin_karsilastir("jaccard"))
-    karsilastir_menu.add_command(label="Metni Levenshtein algoritması ile karşılaştır", command=lambda: metin_karsilastir("levenshtein"))
+    karsilastir_menu.add_command(label="Metni Cosine Similarity ile karşılaştır", command=lambda: metin_karsilastir("cosine"))
+    karsilastir_menu.add_command(label="Metni Jaccard Benzerlik Katsayısı ile karşılaştır", command=lambda: metin_karsilastir("jaccard"))
+    karsilastir_menu.add_command(label="Metni Levenshtein Mesafesi ile karşılaştır", command=lambda: metin_karsilastir("levenshtein"))
     
     islemler_menu = tk.Menu(menu)
     menu.add_cascade(label="İşlemler", menu=islemler_menu)
@@ -127,6 +139,18 @@ def ana_menu():
     sifre_menu.add_command(label="Değiştir", command=sifre_degistir_ekrani)
     
     menu.add_command(label="Çıkış", command=root.quit)
+    
+    global results_text
+    results_text = tk.Text(root, height=15, width=80)
+    results_text.pack()
+    guncelle_sonuclar()
+
+def guncelle_sonuclar():
+    results_text.config(state=tk.NORMAL)
+    results_text.delete(1.0, tk.END)
+    for result in comparison_results:
+        results_text.insert(tk.END, result)
+    results_text.config(state=tk.DISABLED)
 
 def sifre_degistir_ekrani():
     for widget in root.winfo_children():
@@ -143,11 +167,11 @@ def sifre_degistir_ekrani():
     yeni_sifre_entry.pack()
     
     tk.Button(root, text="Güncelle", command=sifre_guncelle).pack()
+    tk.Button(root, text="Geri", command=ana_menu).pack()
 
+# Giriş ekranı
 root = tk.Tk()
 root.title("Kullanıcı Girişi")
-
-current_user = None
 
 tk.Label(root, text="Kullanıcı Adı:").pack()
 kullanici_adi_entry = tk.Entry(root)
@@ -158,6 +182,6 @@ sifre_entry = tk.Entry(root, show="*")
 sifre_entry.pack()
 
 tk.Button(root, text="Giriş Yap", command=kullanici_giris).pack()
-tk.Button(root, text="Kayıt Ol", command=kullanici_kayit).pack()
+tk.Button(root, text="Kaydol", command=kullanici_kayit).pack()
 
 root.mainloop()
